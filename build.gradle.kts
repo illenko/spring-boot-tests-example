@@ -11,6 +11,8 @@ plugins {
 group = "com.illenko"
 version = "0.0.1-SNAPSHOT"
 
+val kotlinLoggingVersion: String by project
+
 java {
     sourceCompatibility = JavaVersion.VERSION_21
 }
@@ -28,6 +30,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.liquibase:liquibase-core")
     implementation("org.springframework:spring-jdbc")
+    implementation("io.github.microutils:kotlin-logging-jvm:$kotlinLoggingVersion")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")

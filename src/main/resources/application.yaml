@@ -1,0 +1,6 @@
+app:
+  token:
+    url:
+  payment:
+    url:
+    api-key: secret-api-key

@@ -1,9 +1,9 @@
 package com.illenko.api.response
 
-import com.illenko.client.payment.enum.PaymentStatus
-import java.util.UUID
+import com.illenko.enum.OrderStatus
+import java.util.*
 
 data class OrderResponse(
     val id: UUID,
-    val status: PaymentStatus,
+    val status: OrderStatus,
 )

@@ -1,17 +1,23 @@
 package com.illenko.api.handler
 
+import com.illenko.api.request.OrderRequest
 import com.illenko.service.OrderService
+import mu.KotlinLogging
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
+import org.springframework.web.reactive.function.server.bodyToMono
 import reactor.core.publisher.Mono
 
 @Component
 class OrderHandler(
-    private val orderService: OrderService,
+    private val service: OrderService,
 ) {
+    private val log = KotlinLogging.logger {}
 
-    fun process(request: ServerRequest): Mono<ServerResponse> {
-        TODO("implement")
-    }
+    fun process(request: ServerRequest): Mono<ServerResponse> =
+        request.bodyToMono<OrderRequest>()
+            .doOnNext { log.info { "Processing order request: $it" } }
+            .flatMap { service.process(it) }
+            .flatMap { ServerResponse.ok().bodyValue(it) }
 }

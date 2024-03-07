@@ -12,6 +12,8 @@ group = "com.illenko"
 version = "0.0.1-SNAPSHOT"
 
 val kotlinLoggingVersion: String by project
+val mockkVersion: String by project
+val instancioVersion: String by project
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -35,6 +37,8 @@ dependencies {
     runtimeOnly("org.postgresql:r2dbc-postgresql")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
+    testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("org.instancio:instancio-junit:$instancioVersion")
 }
 
 tasks.withType<KotlinCompile> {

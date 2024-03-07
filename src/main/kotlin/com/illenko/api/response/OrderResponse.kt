@@ -1,7 +1,7 @@
 package com.illenko.api.response
 
 import com.illenko.enum.OrderStatus
-import java.util.*
+import java.util.UUID
 
 data class OrderResponse(
     val id: UUID,

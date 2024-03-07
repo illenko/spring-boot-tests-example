@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-1
+      author: illenko
+      changes:
+        - createTable:
+            tableName: order
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                  defaultValueComputed: ${uuid_default}
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: item_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: decimal(10, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar
+                  constraints:
+                    nullable: false
+              - column:
+                  name: payment_id
+                  type: UUID
+                  constraints:
+                    nullable: false

@@ -19,5 +19,6 @@ class OrderHandler(
         request.bodyToMono<OrderRequest>()
             .doOnNext { log.info { "Processing order request: $it" } }
             .flatMap { service.process(it) }
+            .doOnNext { log.info { "Processing order result: $it" } }
             .flatMap { ServerResponse.ok().bodyValue(it) }
 }

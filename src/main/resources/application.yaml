@@ -12,8 +12,8 @@ spring:
     password: ${spring.r2dbc.password}
 
 app:
-  token:
+  token-client:
     url:
-  payment:
+  payment-client:
     url:
     api-key: secret-api-key

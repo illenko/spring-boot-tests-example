@@ -13,7 +13,6 @@ class TokenClient(
     @Qualifier("tokenWebClient")
     private val client: WebClient,
 ) {
-
     private val log = KotlinLogging.logger {}
 
     fun getToken(id: UUID): Mono<TokenResponse> {

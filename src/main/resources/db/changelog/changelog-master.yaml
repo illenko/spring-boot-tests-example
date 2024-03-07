@@ -8,39 +8,5 @@ databaseChangeLog:
       name: uuid_default
       value: random_uuid()
   - include:
-      file: db-create.sql
-      relativeToChangelogFile: true
-      context: '!h2'
-  - include:
-      file: changelog-001-add-intent-table.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-002-add-payment-table.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-003-additional-info.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-004-add-user_action_url-column.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-005-intent-fee.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-006-required-3ds.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-007-add-operation-id-in-payment-table.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-008-add-total-amount.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-009-add-date-time-columns.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-010-add-field-recipient-info.yaml
-      relativeToChangelogFile: true
-  - include:
-      file: changelog-011-add-field-sender_card_id.yaml
+      file: changelog-001-create-order-table
       relativeToChangelogFile: true

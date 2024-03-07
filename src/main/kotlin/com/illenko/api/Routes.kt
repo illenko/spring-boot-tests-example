@@ -7,9 +7,9 @@ import org.springframework.web.reactive.function.server.router
 
 @Configuration
 class Routes {
-
     @Bean
-    fun orderRouter(handler: OrderHandler) = router {
-        POST("/orders", handler::process)
-    }
+    fun orderRouter(handler: OrderHandler) =
+        router {
+            POST("/orders", handler::process)
+        }
 }

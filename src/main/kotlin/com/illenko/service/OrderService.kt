@@ -8,6 +8,7 @@ import com.illenko.client.token.TokenClient
 import com.illenko.enum.OrderStatus
 import com.illenko.mapper.OrderMapper
 import com.illenko.mapper.PaymentMapper
+import com.illenko.model.Order
 import com.illenko.repository.OrderRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
@@ -21,25 +22,37 @@ class OrderService(
     private val orderMapper: OrderMapper,
     private val orderRepository: OrderRepository,
 ) {
-
     private val log = KotlinLogging.logger {}
 
     fun process(request: OrderRequest): Mono<OrderResponse> {
-        log.info { "Processing order request: $request" }
-
         return orderRepository.save(orderMapper.toEntity(request))
-            .zipWith(tokenClient.getToken(request.tokenId))
-            .flatMap {
-                paymentClient.pay(paymentMapper.toPaymentRequest(it.t1, it.t2.token))
-                    .flatMap { paymentResult ->
-                        orderRepository.save(it.t1.apply {
-                            this.status = when (paymentResult.status) {
-                                PaymentStatus.SUCCESS -> OrderStatus.PAID
-                                PaymentStatus.FAILED -> OrderStatus.CANCELED
-                            }
-                        })
-                    }
+            .doOnNext { log.info { "Saved order: $it" } }
+            .flatMap { order ->
+                tokenClient.getToken(order.tokenId)
+                    .doOnNext { log.info { "Retrieved token by id: ${order.tokenId}" } }
+                    .map { paymentMapper.toPaymentRequest(order = order, token = it.token) }
+                    .doOnNext { log.info { "Prepared payment request: $it" } }
+                    .flatMap { paymentClient.pay(it) }
+                    .doOnNext { log.info { "Retrieved payment response: $it" } }
+                    .flatMap { updateOrderStatus(order, it.status) }
+                    .doOnNext { log.info { "Update order: $it" } }
+                    .doOnError { log.error { "Handled an error while processing order: $order, $it" } }
+                    .onErrorResume { updateOrderStatus(order = order, status = PaymentStatus.FAILED) }
             }
             .map { orderMapper.toResponse(it) }
     }
+
+    private fun updateOrderStatus(
+        order: Order,
+        status: PaymentStatus,
+    ): Mono<Order> =
+        orderRepository.save(
+            order.apply {
+                this.status =
+                    when (status) {
+                        PaymentStatus.SUCCESS -> OrderStatus.PAID
+                        PaymentStatus.FAILED -> OrderStatus.CANCELED
+                    }
+            },
+        )
 }

@@ -13,7 +13,6 @@ class PaymentClient(
     @Qualifier("paymentWebClient")
     private val client: WebClient,
 ) {
-
     private val log = KotlinLogging.logger {}
 
     fun pay(request: PaymentRequest): Mono<PaymentResponse> {

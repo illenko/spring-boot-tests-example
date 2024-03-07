@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class OrderMapper {
-
     fun toEntity(request: OrderRequest): Order =
         Order(
             userId = request.userId,

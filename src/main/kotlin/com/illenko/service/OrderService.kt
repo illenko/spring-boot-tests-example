@@ -29,27 +29,27 @@ class OrderService(
             .doOnNext { log.info { "Saved order: $it" } }
             .flatMap { order ->
                 tokenClient.getToken(order.tokenId)
-                    .doOnNext { log.info { "Retrieved token by id: ${order.tokenId}" } }
+                    .doOnNext { log.info { "Retrieved token: $it" } }
                     .map { paymentMapper.toPaymentRequest(order = order, token = it.token) }
                     .doOnNext { log.info { "Prepared payment request: $it" } }
                     .flatMap { paymentClient.pay(it) }
                     .doOnNext { log.info { "Retrieved payment response: $it" } }
                     .flatMap { updateOrderStatus(order, it.status) }
-                    .doOnNext { log.info { "Update order: $it" } }
+                    .doOnNext { log.info { "Updated order: $it" } }
                     .doOnError { log.error { "Handled an error while processing order: $order, $it" } }
-                    .onErrorResume { updateOrderStatus(order = order, status = PaymentStatus.FAILED) }
+                    .onErrorResume { updateOrderStatus(order = order, paymentStatus = PaymentStatus.FAILED) }
             }
             .map { orderMapper.toResponse(it) }
     }
 
     private fun updateOrderStatus(
         order: Order,
-        status: PaymentStatus,
+        paymentStatus: PaymentStatus,
     ): Mono<Order> =
         orderRepository.save(
             order.apply {
-                this.status =
-                    when (status) {
+                status =
+                    when (paymentStatus) {
                         PaymentStatus.SUCCESS -> OrderStatus.PAID
                         PaymentStatus.FAILED -> OrderStatus.CANCELED
                     }

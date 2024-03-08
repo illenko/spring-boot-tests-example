@@ -8,18 +8,26 @@ import com.illenko.client.payment.request.PaymentRequest
 import com.illenko.client.payment.response.PaymentResponse
 import com.illenko.client.token.TokenClient
 import com.illenko.client.token.response.TokenResponse
+import com.illenko.core.BaseUnitTest
+import com.illenko.enum.OrderStatus
 import com.illenko.mapper.OrderMapper
 import com.illenko.mapper.PaymentMapper
 import com.illenko.model.Order
 import com.illenko.repository.OrderRepository
-import core.BaseUnitTest
+import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.ArgumentsProvider
+import org.junit.jupiter.params.provider.ArgumentsSource
+import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
-import java.util.UUID
+import java.util.stream.Stream
 
 class OrderServiceUnitTest : BaseUnitTest() {
     private val tokenClient = mockk<TokenClient>()
@@ -37,31 +45,65 @@ class OrderServiceUnitTest : BaseUnitTest() {
             orderMapper = orderMapper,
         )
 
-    @Test
-    fun `processing order`() {
+    @BeforeEach
+    fun setup() {
+        clearAllMocks()
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(DataProvider::class)
+    fun `processing order`(
+        paymentStatus: PaymentStatus,
+        orderStatus: OrderStatus,
+        tokenClientError: Boolean,
+        paymentClientError: Boolean,
+    ) {
         val request = random<OrderRequest>()
-        val newOrder = random<Order>().apply { id = null }
-        val order = newOrder.apply { id = random<UUID>() }
-        val tokenResponse = random<TokenResponse>()
+        val newOrder =
+            random<Order>().apply {
+                id = null
+                status = OrderStatus.CREATED
+            }
+
+        val savedOrder =
+            newOrder.apply {
+                id = random()
+                status = orderStatus
+            }
+
+        val token = random<String>()
+        val tokenResponse =
+            if (tokenClientError) {
+                Mono.error(RuntimeException())
+            } else {
+                random<TokenResponse>().copy(token = token).toMono()
+            }
+
         val paymentRequest =
             PaymentRequest(
-                orderId = order.id!!,
-                token = tokenResponse.token,
+                orderId = savedOrder.id!!,
+                token = token,
                 amount = request.price,
             )
+
         val paymentResponse =
-            PaymentResponse(
-                id = random<UUID>(),
-                status = PaymentStatus.SUCCESS,
-            )
+            if (paymentClientError) {
+                Mono.error(RuntimeException())
+            } else {
+                PaymentResponse(
+                    id = random(),
+                    status = paymentStatus,
+                ).toMono()
+            }
 
         val expected = random<OrderResponse>()
 
-        every { orderMapper.toEntity(any()) } returns order
-        every { orderRepository.save(any()) } returns order.toMono()
-        every { tokenClient.getToken(any()) } returns tokenResponse.toMono()
+        every { orderMapper.toEntity(any()) } returns newOrder
+        every { orderRepository.save(any()) } returns savedOrder.toMono()
+        every { tokenClient.getToken(any()) } returns tokenResponse
         every { paymentMapper.toPaymentRequest(any(), any()) } returns paymentRequest
-        every { paymentClient.pay(any()) } returns paymentResponse.toMono()
+        every { paymentClient.pay(any()) } returns paymentResponse
+
         every { orderMapper.toResponse(any()) } returns expected
 
         val actual = sut.process(request).block()
@@ -69,13 +111,25 @@ class OrderServiceUnitTest : BaseUnitTest() {
         verify {
             orderMapper.toEntity(request)
             orderRepository.save(newOrder)
-            orderRepository.save(order)
-            tokenClient.getToken(order.tokenId)
-            paymentMapper.toPaymentRequest(order, tokenResponse.token)
-            paymentClient.pay(paymentRequest)
-            orderMapper.toResponse(order)
+            orderRepository.save(savedOrder)
+            tokenClient.getToken(savedOrder.tokenId)
+            if (!tokenClientError) {
+                paymentMapper.toPaymentRequest(savedOrder, token)
+                paymentClient.pay(paymentRequest)
+            }
+            orderMapper.toResponse(savedOrder)
         }
 
         assertEquals(expected, actual)
+    }
+
+    class DataProvider : ArgumentsProvider {
+        override fun provideArguments(context: ExtensionContext): Stream<Arguments> =
+            Stream.of(
+                Arguments.of(PaymentStatus.SUCCESS, OrderStatus.PAID, false, false),
+                Arguments.of(PaymentStatus.FAILED, OrderStatus.CANCELED, false, false),
+                Arguments.of(PaymentStatus.SUCCESS, OrderStatus.CANCELED, true, false),
+                Arguments.of(PaymentStatus.FAILED, OrderStatus.CANCELED, false, true),
+            )
     }
 }

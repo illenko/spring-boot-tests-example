@@ -1,4 +1,4 @@
-package core
+package com.illenko.core
 
 import org.instancio.Instancio
 

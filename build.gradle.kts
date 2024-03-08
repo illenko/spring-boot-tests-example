@@ -6,6 +6,7 @@ plugins {
     id("org.graalvm.buildtools.native") version "0.9.28"
     kotlin("jvm") version "1.9.22"
     kotlin("plugin.spring") version "1.9.22"
+    id("org.jetbrains.kotlinx.kover") version "0.7.5"
 }
 
 group = "com.illenko"
@@ -45,6 +46,26 @@ tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs += "-Xjsr305=strict"
         jvmTarget = "21"
+    }
+}
+
+koverReport {
+    filters {
+        excludes {
+            classes(
+                "org.springframework.*",
+                "*BeanDefinitions*",
+                "*BeanFactoryRegistrations*",
+                "*ApplicationContextInitializer*",
+            )
+        }
+    }
+
+    verify {
+        rule {
+            isEnabled = true
+            bound { minValue = 55 }
+        }
     }
 }
 

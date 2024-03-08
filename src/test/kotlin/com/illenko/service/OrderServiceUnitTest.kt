@@ -18,7 +18,7 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
@@ -27,6 +27,7 @@ import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
+import reactor.test.StepVerifier
 import java.util.stream.Stream
 
 class OrderServiceUnitTest : BaseUnitTest() {
@@ -103,10 +104,12 @@ class OrderServiceUnitTest : BaseUnitTest() {
         every { tokenClient.getToken(any()) } returns tokenResponse
         every { paymentMapper.toPaymentRequest(any(), any()) } returns paymentRequest
         every { paymentClient.pay(any()) } returns paymentResponse
-
         every { orderMapper.toResponse(any()) } returns expected
 
-        val actual = sut.process(request).block()
+        StepVerifier
+            .create(sut.process(request))
+            .assertNext { assertThat(it).isEqualTo(expected) }
+            .verifyComplete()
 
         verify {
             orderMapper.toEntity(request)
@@ -119,8 +122,6 @@ class OrderServiceUnitTest : BaseUnitTest() {
             }
             orderMapper.toResponse(savedOrder)
         }
-
-        assertEquals(expected, actual)
     }
 
     class DataProvider : ArgumentsProvider {

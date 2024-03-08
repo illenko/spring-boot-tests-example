@@ -88,6 +88,7 @@ ktlint {
 pitest {
     junit5PluginVersion = "1.2.1"
     threads.set(Runtime.getRuntime().availableProcessors())
+    avoidCallsTo.set(setOf("kotlin.jvm.internal"))
 }
 
 tasks.withType<Test> {

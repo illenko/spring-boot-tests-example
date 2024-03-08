@@ -13,6 +13,7 @@ import com.illenko.repository.OrderRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
+import reactor.kotlin.core.publisher.switchIfEmpty
 
 @Service
 class OrderService(
@@ -37,9 +38,10 @@ class OrderService(
                     .flatMap { updateOrderStatus(order, it.status) }
                     .doOnNext { log.info { "Updated order: $it" } }
                     .doOnError { log.error { "Handled an error while processing order: $order, $it" } }
+                    .switchIfEmpty { updateOrderStatus(order = order, paymentStatus = PaymentStatus.FAILED) }
                     .onErrorResume { updateOrderStatus(order = order, paymentStatus = PaymentStatus.FAILED) }
+                    .map { orderMapper.toResponse(it) }
             }
-            .map { orderMapper.toResponse(it) }
     }
 
     private fun updateOrderStatus(

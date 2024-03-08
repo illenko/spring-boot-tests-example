@@ -1,8 +1,10 @@
 package com.illenko.api.handler
 
 import com.illenko.api.request.OrderRequest
+import com.illenko.api.response.OrderResponse
 import com.illenko.service.OrderService
 import mu.KotlinLogging
+import org.springframework.aot.hint.annotation.RegisterReflectionForBinding
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
@@ -10,6 +12,10 @@ import org.springframework.web.reactive.function.server.bodyToMono
 import reactor.core.publisher.Mono
 
 @Component
+@RegisterReflectionForBinding(
+    OrderRequest::class,
+    OrderResponse::class,
+)
 class OrderHandler(
     private val service: OrderService,
 ) {

@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
 plugins {
     id("org.springframework.boot") version "3.2.3"
@@ -7,6 +8,8 @@ plugins {
     kotlin("jvm") version "1.9.22"
     kotlin("plugin.spring") version "1.9.22"
     id("org.jetbrains.kotlinx.kover") version "0.7.5"
+    id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
+    id("info.solidsoft.pitest") version "1.15.0"
 }
 
 group = "com.illenko"
@@ -69,6 +72,25 @@ koverReport {
     }
 }
 
+ktlint {
+    verbose.set(true)
+    outputToConsole.set(true)
+    coloredOutput.set(true)
+    version.set("0.48.2")
+
+    reporters {
+        reporter(ReporterType.CHECKSTYLE)
+        reporter(ReporterType.JSON)
+        reporter(ReporterType.HTML)
+    }
+}
+
+pitest {
+    junit5PluginVersion = "1.2.1"
+    threads.set(Runtime.getRuntime().availableProcessors())
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.pitest)
 }

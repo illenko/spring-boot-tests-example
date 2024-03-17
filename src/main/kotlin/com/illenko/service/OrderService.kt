@@ -3,58 +3,38 @@ package com.illenko.service
 import com.illenko.api.request.OrderRequest
 import com.illenko.api.response.OrderResponse
 import com.illenko.client.payment.PaymentClient
-import com.illenko.client.payment.enum.PaymentStatus
-import com.illenko.client.token.TokenClient
 import com.illenko.enum.OrderStatus
 import com.illenko.mapper.OrderMapper
-import com.illenko.mapper.PaymentMapper
-import com.illenko.model.Order
 import com.illenko.repository.OrderRepository
 import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.switchIfEmpty
+import reactor.kotlin.core.publisher.toMono
 
 @Service
 class OrderService(
-    private val tokenClient: TokenClient,
     private val paymentClient: PaymentClient,
-    private val paymentMapper: PaymentMapper,
     private val orderMapper: OrderMapper,
     private val orderRepository: OrderRepository,
 ) {
     private val log = KotlinLogging.logger {}
 
     fun process(request: OrderRequest): Mono<OrderResponse> {
-        return orderRepository.save(orderMapper.toEntity(request))
-            .doOnNext { log.info { "Saved order: $it" } }
+        val entity = orderMapper.toEntity(request)
+        return orderRepository.save(entity)
+            .doOnNext { log.info { "Saved new order: $it" } }
             .flatMap { order ->
-                tokenClient.getToken(order.tokenId)
-                    .doOnNext { log.info { "Retrieved token: $it" } }
-                    .map { paymentMapper.toPaymentRequest(order = order, token = it.token) }
-                    .doOnNext { log.info { "Prepared payment request: $it" } }
-                    .flatMap { paymentClient.pay(it) }
+                val paymentRequest = orderMapper.toPaymentRequest(order)
+                log.info { "Prepared payment request: $paymentRequest" }
+                paymentClient.pay(paymentRequest)
                     .doOnNext { log.info { "Retrieved payment response: $it" } }
-                    .flatMap { updateOrderStatus(order, it.status) }
+                    .map { orderMapper.toEntity(order, it) }
+                    .onErrorResume { orderMapper.toEntity(order, OrderStatus.PAYMENT_FAILED).toMono() }
+                    .doOnNext { log.info { "Prepared order entity to update: $it" } }
+                    .flatMap { orderRepository.save(it) }
                     .doOnNext { log.info { "Updated order: $it" } }
-                    .doOnError { log.error { "Handled an error while processing order: $order, $it" } }
-                    .switchIfEmpty { updateOrderStatus(order = order, paymentStatus = PaymentStatus.FAILED) }
-                    .onErrorResume { updateOrderStatus(order = order, paymentStatus = PaymentStatus.FAILED) }
                     .map { orderMapper.toResponse(it) }
+                    .doOnNext { log.info { "Mapped order to response: $it" } }
             }
     }
-
-    private fun updateOrderStatus(
-        order: Order,
-        paymentStatus: PaymentStatus,
-    ): Mono<Order> =
-        orderRepository.save(
-            order.apply {
-                status =
-                    when (paymentStatus) {
-                        PaymentStatus.SUCCESS -> OrderStatus.PAID
-                        PaymentStatus.FAILED -> OrderStatus.CANCELED
-                    }
-            },
-        )
 }

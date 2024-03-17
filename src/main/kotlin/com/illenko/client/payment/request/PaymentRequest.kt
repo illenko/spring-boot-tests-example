@@ -5,6 +5,6 @@ import java.util.UUID
 
 data class PaymentRequest(
     val orderId: UUID,
-    val token: String,
+    val tokenId: UUID,
     val amount: BigDecimal,
 )

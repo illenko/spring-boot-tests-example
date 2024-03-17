@@ -2,6 +2,7 @@ package com.illenko.mapper
 
 import com.illenko.api.request.OrderRequest
 import com.illenko.api.response.OrderResponse
+import com.illenko.client.payment.request.PaymentRequest
 import com.illenko.core.BaseUnitTest
 import com.illenko.enum.OrderStatus
 import com.illenko.model.Order
@@ -12,7 +13,7 @@ class OrderMapperUnitTest : BaseUnitTest() {
     private val sut = OrderMapper()
 
     @Test
-    fun `to entity conversion`() {
+    fun `to entity`() {
         val request = random<OrderRequest>()
 
         val expected =
@@ -30,7 +31,7 @@ class OrderMapperUnitTest : BaseUnitTest() {
     }
 
     @Test
-    fun `to response conversion`() {
+    fun `to response`() {
         val order = random<Order>().apply { id = random() }
 
         val expected =
@@ -40,6 +41,22 @@ class OrderMapperUnitTest : BaseUnitTest() {
             )
 
         val actual = sut.toResponse(order)
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `to payment request`() {
+        val order = random<Order>().apply { id = random() }
+
+        val expected =
+            PaymentRequest(
+                orderId = order.id!!,
+                tokenId = order.tokenId,
+                amount = order.price,
+            )
+
+        val actual = sut.toPaymentRequest(order)
 
         assertEquals(expected, actual)
     }

@@ -23,6 +23,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
+import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import reactor.test.StepVerifier
 import java.util.stream.Stream
@@ -44,11 +45,12 @@ class OrderServiceUnitTest : BaseUnitTest() {
         clearAllMocks()
     }
 
+    @Suppress("LongMethod")
     @ParameterizedTest
     @ArgumentsSource(DataProvider::class)
     fun `processing order`(
-        paymentStatus: PaymentStatus,
         orderStatus: OrderStatus,
+        paymentStatus: PaymentStatus?,
     ) {
         val request = random<OrderRequest>()
 
@@ -77,12 +79,14 @@ class OrderServiceUnitTest : BaseUnitTest() {
             )
 
         val paymentResponseValue =
-            PaymentResponse(
-                id = random(),
-                status = paymentStatus,
-            )
+            paymentStatus?.let {
+                PaymentResponse(
+                    id = random(),
+                    status = it,
+                )
+            }
 
-        val paymentResponse = paymentResponseValue.toMono()
+        val paymentResponse = paymentResponseValue?.toMono() ?: Mono.error(RuntimeException())
 
         val expected =
             OrderResponse(
@@ -94,7 +98,11 @@ class OrderServiceUnitTest : BaseUnitTest() {
         every { orderRepository.save(newOrder) } returns savedOrder.toMono()
         every { orderMapper.toPaymentRequest(any()) } returns paymentRequest
         every { paymentClient.pay(any()) } returns paymentResponse
-        every { orderMapper.toEntity(any(), any<PaymentResponse>()) } returns updatedOrder
+        if (paymentResponseValue == null) {
+            every { orderMapper.toEntity(any(), any<OrderStatus>()) } returns updatedOrder
+        } else {
+            every { orderMapper.toEntity(any(), any<PaymentResponse>()) } returns updatedOrder
+        }
         every { orderRepository.save(updatedOrder) } returns updatedOrder.toMono()
         every { orderMapper.toResponse(any()) } returns expected
 
@@ -108,10 +116,17 @@ class OrderServiceUnitTest : BaseUnitTest() {
             orderRepository.save(newOrder)
             orderMapper.toPaymentRequest(savedOrder)
             paymentClient.pay(paymentRequest)
-            orderMapper.toEntity(
-                savedOrder,
-                paymentResponseValue,
-            )
+            if (paymentResponseValue != null) {
+                orderMapper.toEntity(
+                    savedOrder,
+                    paymentResponseValue,
+                )
+            } else {
+                orderMapper.toEntity(
+                    savedOrder,
+                    OrderStatus.PAYMENT_FAILED,
+                )
+            }
             orderRepository.save(updatedOrder)
             orderMapper.toResponse(savedOrder)
         }
@@ -120,8 +135,9 @@ class OrderServiceUnitTest : BaseUnitTest() {
     class DataProvider : ArgumentsProvider {
         override fun provideArguments(context: ExtensionContext): Stream<Arguments> =
             Stream.of(
-                Arguments.of(PaymentStatus.SUCCESS, OrderStatus.PAID),
-                Arguments.of(PaymentStatus.FAILED, OrderStatus.PAYMENT_FAILED),
+                Arguments.of(OrderStatus.PAID, PaymentStatus.SUCCESS),
+                Arguments.of(OrderStatus.PAYMENT_REJECTED, PaymentStatus.REJECTED),
+                Arguments.of(OrderStatus.PAYMENT_FAILED, null),
             )
     }
 }

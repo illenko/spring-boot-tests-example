@@ -13,7 +13,7 @@ class OrderMapperUnitTest : BaseUnitTest() {
     private val sut = OrderMapper()
 
     @Test
-    fun `to entity`() {
+    fun `to entity new`() {
         val request = random<OrderRequest>()
 
         val expected =
@@ -26,6 +26,27 @@ class OrderMapperUnitTest : BaseUnitTest() {
             )
 
         val actual = sut.toEntity(request)
+
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `to entity`() {
+        val order = random<Order>().apply { id = random() }
+        val orderStatus = random<OrderStatus>()
+
+        val expected =
+            Order(
+                id = order.id,
+                userId = order.userId,
+                tokenId = order.tokenId,
+                itemId = order.itemId,
+                price = order.price,
+                status = orderStatus,
+                paymentId = order.paymentId,
+            )
+
+        val actual = sut.toEntity(order, orderStatus)
 
         assertEquals(expected, actual)
     }

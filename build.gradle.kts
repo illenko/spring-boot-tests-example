@@ -1,3 +1,4 @@
+import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 
@@ -9,6 +10,7 @@ plugins {
     kotlin("plugin.spring") version "1.9.22"
     id("org.jetbrains.kotlinx.kover") version "0.7.5"
     id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
+    id("io.gitlab.arturbosch.detekt") version "1.23.5"
     id("info.solidsoft.pitest") version "1.15.0"
 }
 
@@ -18,6 +20,7 @@ version = "0.0.1-SNAPSHOT"
 val kotlinLoggingVersion: String by project
 val mockkVersion: String by project
 val instancioVersion: String by project
+val detektVersion: String by project
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -43,6 +46,8 @@ dependencies {
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("org.instancio:instancio-junit:$instancioVersion")
+
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
 }
 
 tasks.withType<KotlinCompile> {
@@ -88,7 +93,19 @@ ktlint {
 pitest {
     junit5PluginVersion = "1.2.1"
     threads.set(Runtime.getRuntime().availableProcessors())
-    avoidCallsTo.set(setOf("kotlin.jvm.internal"))
+    avoidCallsTo.set(setOf("kotlin.jvm.internal", "mu.KLogger"))
+}
+
+detekt {
+    config.from("gradle/config/detekt.yml")
+}
+
+tasks.withType<Detekt>().configureEach {
+    jvmTarget = "21"
+    reports {
+        html.required.set(true)
+        txt.required.set(true)
+    }
 }
 
 tasks.withType<Test> {

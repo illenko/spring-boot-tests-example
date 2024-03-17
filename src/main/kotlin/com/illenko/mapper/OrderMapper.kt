@@ -20,12 +20,6 @@ class OrderMapper {
             status = OrderStatus.CREATED,
         )
 
-    fun toResponse(entity: Order): OrderResponse =
-        OrderResponse(
-            id = entity.id!!,
-            status = entity.status,
-        )
-
     fun toEntity(
         order: Order,
         paymentResponse: PaymentResponse,
@@ -36,11 +30,7 @@ class OrderMapper {
             tokenId = order.tokenId,
             itemId = order.itemId,
             price = order.price,
-            status =
-                when (paymentResponse.status) {
-                    PaymentStatus.FAILED -> OrderStatus.PAYMENT_FAILED
-                    PaymentStatus.SUCCESS -> OrderStatus.PAID
-                },
+            status = orderStatus(paymentResponse),
             paymentId = paymentResponse.id,
         )
 
@@ -54,7 +44,8 @@ class OrderMapper {
             tokenId = order.tokenId,
             itemId = order.itemId,
             price = order.price,
-            status = OrderStatus.PAYMENT_FAILED,
+            status = status,
+            paymentId = order.paymentId,
         )
 
     fun toPaymentRequest(order: Order): PaymentRequest =
@@ -63,4 +54,16 @@ class OrderMapper {
             tokenId = order.tokenId,
             amount = order.price,
         )
+
+    fun toResponse(entity: Order): OrderResponse =
+        OrderResponse(
+            id = entity.id!!,
+            status = entity.status,
+        )
+
+    private fun orderStatus(paymentResponse: PaymentResponse) =
+        when (paymentResponse.status) {
+            PaymentStatus.REJECTED -> OrderStatus.PAYMENT_REJECTED
+            PaymentStatus.SUCCESS -> OrderStatus.PAID
+        }
 }

@@ -8,5 +8,9 @@ databaseChangeLog:
       name: uuid_default
       value: random_uuid()
   - include:
-      file: changelog-001-create-order-table
+      file: db-create.sql
+      relativeToChangelogFile: true
+      context: '!h2'
+  - include:
+      file: changelog-001-create-order-table.yaml
       relativeToChangelogFile: true

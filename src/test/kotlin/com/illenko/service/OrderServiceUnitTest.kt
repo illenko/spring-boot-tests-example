@@ -73,7 +73,6 @@ class OrderServiceUnitTest : BaseUnitTest() {
 
         val paymentRequest =
             PaymentRequest(
-                orderId = savedOrder.id!!,
                 tokenId = savedOrder.tokenId,
                 amount = request.price,
             )

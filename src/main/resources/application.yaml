@@ -6,14 +6,12 @@ spring:
     username: postgres
     password: postgres
   liquibase:
-    change-log: db.changelog/changelog-master.yaml
+    change-log: db/changelog/changelog-master.yaml
     url: jdbc:postgresql://localhost:5432/order_service
     user: ${spring.r2dbc.username}
     password: ${spring.r2dbc.password}
 
 app:
-  token-client:
-    url:
   payment-client:
     url:
-    api-key: secret-api-key
+    api-key:

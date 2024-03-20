@@ -29,7 +29,7 @@ class OrderService(
                 paymentClient.pay(paymentRequest)
                     .doOnNext { log.info { "Retrieved payment response: $it" } }
                     .map { orderMapper.toEntity(order, it) }
-                    .doOnError { log.error { "Order payment failed: ${order.id}" } }
+                    .doOnError { log.error { "Order payment failed: ${order.id}: ${it.message}" } }
                     .onErrorResume { orderMapper.toEntity(order, OrderStatus.PAYMENT_FAILED).toMono() }
                     .doOnNext { log.info { "Prepared order entity to update: $it" } }
                     .flatMap { orderRepository.save(it) }

@@ -19,8 +19,11 @@ version = "0.0.1-SNAPSHOT"
 
 val kotlinLoggingVersion: String by project
 val mockkVersion: String by project
+val springMockkVersion: String by project
 val instancioVersion: String by project
 val detektVersion: String by project
+val testContainersVersion: String by project
+val wiremockVersion: String by project
 
 java {
     sourceCompatibility = JavaVersion.VERSION_21
@@ -45,7 +48,14 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
     testImplementation("io.mockk:mockk:$mockkVersion")
+    testImplementation("com.ninja-squad:springmockk:$springMockkVersion")
     testImplementation("org.instancio:instancio-junit:$instancioVersion")
+    testImplementation("org.testcontainers:testcontainers:$testContainersVersion")
+    testImplementation("org.wiremock:wiremock-standalone:$wiremockVersion")
+    testImplementation("org.testcontainers:junit-jupiter:$testContainersVersion")
+    testImplementation("org.testcontainers:postgresql:$testContainersVersion")
+    testImplementation("com.h2database:h2")
+    testImplementation("io.r2dbc:r2dbc-h2")
 
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
 }
@@ -65,6 +75,7 @@ koverReport {
                 "*BeanDefinitions*",
                 "*BeanFactoryRegistrations*",
                 "*ApplicationContextInitializer*",
+                "*ApplicationKt",
             )
         }
     }
@@ -72,7 +83,7 @@ koverReport {
     verify {
         rule {
             isEnabled = true
-            bound { minValue = 55 }
+            bound { minValue = 95 }
         }
     }
 }
@@ -92,7 +103,7 @@ ktlint {
 
 pitest {
     junit5PluginVersion = "1.2.1"
-    threads.set(Runtime.getRuntime().availableProcessors())
+    threads.set(4)
     avoidCallsTo.set(setOf("kotlin.jvm.internal", "mu.KLogger"))
 }
 
@@ -109,6 +120,11 @@ tasks.withType<Detekt>().configureEach {
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
-    finalizedBy(tasks.pitest)
+    useJUnitPlatform {
+        includeTags("UnitTest")
+    }
+    testLogging {
+        showStandardStreams = true
+        events("passed", "skipped", "failed")
+    }
 }

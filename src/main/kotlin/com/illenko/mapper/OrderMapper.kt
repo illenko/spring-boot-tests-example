@@ -50,7 +50,6 @@ class OrderMapper {
 
     fun toPaymentRequest(order: Order): PaymentRequest =
         PaymentRequest(
-            orderId = order.id!!,
             tokenId = order.tokenId,
             amount = order.price,
         )

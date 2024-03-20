@@ -4,7 +4,7 @@ databaseChangeLog:
       author: illenko
       changes:
         - createTable:
-            tableName: order
+            tableName: order_record
             columns:
               - column:
                   name: id
@@ -42,4 +42,4 @@ databaseChangeLog:
                   name: payment_id
                   type: UUID
                   constraints:
-                    nullable: false
+                    nullable: true

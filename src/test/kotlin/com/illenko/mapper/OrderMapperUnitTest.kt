@@ -72,7 +72,6 @@ class OrderMapperUnitTest : BaseUnitTest() {
 
         val expected =
             PaymentRequest(
-                orderId = order.id!!,
                 tokenId = order.tokenId,
                 amount = order.price,
             )

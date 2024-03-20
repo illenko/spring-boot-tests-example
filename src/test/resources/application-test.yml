@@ -1,0 +1,18 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+app:
+  payment-client:
+    api-key: secret-api-key
+
+---
+spring:
+  config:
+    activate:
+      on-profile: integration
+  r2dbc:
+    url: r2dbc:h2:mem:///order-service?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+  liquibase:
+    url: jdbc:h2:mem:order-service;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    contexts: 'h2'

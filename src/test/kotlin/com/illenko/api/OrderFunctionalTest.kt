@@ -22,28 +22,20 @@ class OrderFunctionalTest : BaseFunctionalTest() {
     @ArgumentsSource(DataProvider::class)
     fun `orders endpoint test`(
         orderStatus: OrderStatus,
-        paymentStatus: PaymentStatus?,
+        paymentResponse: PaymentResponse?,
+        paymentResponseStatus: HttpStatus,
     ) {
         val request = random<OrderRequest>()
 
-        if (paymentStatus == null) {
-            mockPost(
-                uri = "/api/v1/payments",
-                requestBody = PaymentRequest(tokenId = request.tokenId, amount = request.price),
-                requestHeaders = mapOf("API-KEY" to "secret-api-key"),
-                responseStatus = HttpStatus.BAD_REQUEST,
-            )
-        } else {
-            mockPost(
-                uri = "/api/v1/payments",
-                requestBody = PaymentRequest(tokenId = request.tokenId, amount = request.price),
-                requestHeaders = mapOf("API-KEY" to "secret-api-key"),
-                responseBody = PaymentResponse(id = random(), status = paymentStatus),
-            )
-        }
+        mockPost(
+            uri = "/api/v1/payments",
+            requestBody = PaymentRequest(tokenId = request.tokenId, amount = request.price).toJson(),
+            requestHeaders = mapOf("API-KEY" to "secret-api-key"),
+            responseBody = paymentResponse?.toJson() ?: "{}",
+            responseStatus = paymentResponseStatus,
+        )
 
-        val actual = doPost<OrderResponse>(uri = "/orders", body = request).responseBody.blockFirst()!!
-
+        val actual = doPost<OrderResponse>(uri = "/orders", body = request.toJson()).responseBody.blockFirst()!!
         assertNotNull(actual.id)
         assertEquals(orderStatus, actual.status)
     }
@@ -51,9 +43,17 @@ class OrderFunctionalTest : BaseFunctionalTest() {
     class DataProvider : ArgumentsProvider {
         override fun provideArguments(context: ExtensionContext): Stream<Arguments> =
             Stream.of(
-                Arguments.of(OrderStatus.PAID, PaymentStatus.SUCCESS),
-                Arguments.of(OrderStatus.PAYMENT_REJECTED, PaymentStatus.REJECTED),
-                Arguments.of(OrderStatus.PAYMENT_FAILED, null),
+                Arguments.of(
+                    OrderStatus.PAID,
+                    PaymentResponse(id = random(), status = PaymentStatus.SUCCESS),
+                    HttpStatus.OK,
+                ),
+                Arguments.of(
+                    OrderStatus.PAYMENT_REJECTED,
+                    PaymentResponse(id = random(), status = PaymentStatus.REJECTED),
+                    HttpStatus.OK,
+                ),
+                Arguments.of(OrderStatus.PAYMENT_FAILED, null, HttpStatus.BAD_REQUEST),
             )
     }
 }

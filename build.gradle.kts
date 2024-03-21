@@ -5,7 +5,6 @@ import org.jlleitschuh.gradle.ktlint.reporter.ReporterType
 plugins {
     id("org.springframework.boot") version "3.2.3"
     id("io.spring.dependency-management") version "1.1.4"
-    id("org.graalvm.buildtools.native") version "0.9.28"
     kotlin("jvm") version "1.9.22"
     kotlin("plugin.spring") version "1.9.22"
     id("org.jetbrains.kotlinx.kover") version "0.7.5"
@@ -71,10 +70,6 @@ koverReport {
     filters {
         excludes {
             classes(
-                "org.springframework.*",
-                "*BeanDefinitions*",
-                "*BeanFactoryRegistrations*",
-                "*ApplicationContextInitializer*",
                 "*ApplicationKt",
             )
         }
@@ -104,7 +99,7 @@ ktlint {
 pitest {
     junit5PluginVersion = "1.2.1"
     threads.set(4)
-    avoidCallsTo.set(setOf("kotlin.jvm.internal", "mu.KLogger"))
+    avoidCallsTo.set(setOf("kotlin.jvm.internal"))
 }
 
 detekt {
@@ -121,7 +116,7 @@ tasks.withType<Detekt>().configureEach {
 
 tasks.withType<Test> {
     useJUnitPlatform {
-        includeTags("UnitTest")
+        includeTags("UnitTest", "IntegrationTest", "FunctionalTest")
     }
     testLogging {
         showStandardStreams = true

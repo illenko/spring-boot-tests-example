@@ -41,32 +41,33 @@ abstract class BaseFunctionalTest : BaseTest() {
 
     final inline fun <reified T : Any> doPost(
         uri: String,
-        body: Any,
+        body: String,
     ) = webTestClient.post()
         .uri(uri)
         .accept(MediaType.APPLICATION_JSON)
+        .contentType(MediaType.APPLICATION_JSON)
         .bodyValue(body)
         .exchange()
         .returnResult<T>()
 
     fun mockPost(
         uri: String,
-        requestBody: Any? = null,
+        requestBody: String?,
         requestHeaders: Map<String, String> = mapOf(),
-        responseBody: Any? = null,
+        responseBody: String = "{}",
         responseStatus: HttpStatus = HttpStatus.OK,
     ) {
         wiremock.stubFor(
             WireMock.post(WireMock.urlPathEqualTo(uri))
                 .apply {
-                    if (requestBody != null) withRequestBody(WireMock.equalToJson(requestBody.toJson()))
+                    if (requestBody != null) withRequestBody(WireMock.equalToJson(requestBody))
                 }
                 .apply {
                     requestHeaders.forEach {
                         withHeader(it.key, WireMock.equalTo(it.value))
                     }
                 }
-                .willReturn(WireMock.jsonResponse(responseBody?.toJson() ?: "{}", responseStatus.value())),
+                .willReturn(WireMock.jsonResponse(responseBody, responseStatus.value())),
         )
     }
 

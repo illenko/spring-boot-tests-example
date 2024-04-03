@@ -1,13 +1,13 @@
 package com.illenko.core
 
+import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import com.illenko.repository.OrderRepository
 import io.mockk.clearAllMocks
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
-import org.junit.jupiter.api.extension.RegisterExtension
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
@@ -20,7 +20,6 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.returnResult
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.junit.jupiter.Container
 
 @Tag("FunctionalTest")
 @ActiveProfiles("test", "functional")
@@ -39,6 +38,11 @@ abstract class BaseFunctionalTest : BaseTest() {
         clearAllMocks()
         orderRepository.deleteAll().block()
         wiremock.resetAll()
+    }
+
+    @AfterEach
+    fun afterEach() {
+        wiremock.checkForUnmatchedRequests()
     }
 
     final inline fun <reified T : Any> doPost(
@@ -78,7 +82,6 @@ abstract class BaseFunctionalTest : BaseTest() {
         private const val JDBC_PREFIX = "jdbc"
         private const val R2DBC_PREFIX = "r2dbc"
 
-        @Container
         @JvmStatic
         val psqlContainer: PostgreSQLContainer<*> =
             PostgreSQLContainer("postgres:16-alpine")
@@ -88,16 +91,13 @@ abstract class BaseFunctionalTest : BaseTest() {
                 .withExposedPorts(5432)
 
         @JvmField
-        @RegisterExtension
-        val wiremock =
-            WireMockExtension.newInstance()
-                .options(WireMockConfiguration.wireMockConfig().port(0))
-                .build()!!
+        val wiremock = WireMockServer(WireMockConfiguration.wireMockConfig().port(0))
 
         @JvmStatic
         @DynamicPropertySource
         fun registerContainers(registry: DynamicPropertyRegistry) {
             psqlContainer.start()
+            wiremock.start()
             registry.apply {
                 add("spring.liquibase.url") { psqlContainer.jdbcUrl }
                 add("spring.r2dbc.url") { psqlContainer.jdbcUrl.replace(JDBC_PREFIX, R2DBC_PREFIX) }

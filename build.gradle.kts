@@ -11,6 +11,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "11.3.1"
     id("io.gitlab.arturbosch.detekt") version "1.23.5"
     id("info.solidsoft.pitest") version "1.15.0"
+    id("se.solrike.sonarlint") version "2.0.0"
 }
 
 group = "com.illenko"
@@ -57,6 +58,7 @@ dependencies {
     testImplementation("io.r2dbc:r2dbc-h2")
 
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:$detektVersion")
+    sonarlintPlugins("org.sonarsource.kotlin:sonar-kotlin-plugin:2.20.0.4382")
 }
 
 tasks.withType<KotlinCompile> {

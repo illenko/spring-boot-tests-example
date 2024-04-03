@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import com.illenko.repository.OrderRepository
+import io.mockk.clearAllMocks
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -35,6 +36,7 @@ abstract class BaseFunctionalTest : BaseTest() {
 
     @BeforeEach
     fun setup() {
+        clearAllMocks()
         orderRepository.deleteAll().block()
         wiremock.resetAll()
     }

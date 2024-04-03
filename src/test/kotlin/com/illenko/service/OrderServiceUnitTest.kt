@@ -11,13 +11,10 @@ import com.illenko.enum.OrderStatus
 import com.illenko.mapper.OrderMapper
 import com.illenko.model.Order
 import com.illenko.repository.OrderRepository
-import io.mockk.Ordering
-import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -40,11 +37,6 @@ class OrderServiceUnitTest : BaseUnitTest() {
             orderMapper = orderMapper,
         )
 
-    @BeforeEach
-    fun setup() {
-        clearAllMocks()
-    }
-
     @Suppress("LongMethod")
     @ParameterizedTest
     @ArgumentsSource(DataProvider::class)
@@ -60,16 +52,9 @@ class OrderServiceUnitTest : BaseUnitTest() {
                 status = OrderStatus.CREATED
             }
 
-        val savedOrder =
-            newOrder.apply {
-                id = random()
-            }
+        val savedOrder = newOrder.copy(id = random())
 
-        val updatedOrder =
-            newOrder.apply {
-                id = random()
-                status = orderStatus
-            }
+        val updatedOrder = savedOrder.copy(status = orderStatus)
 
         val paymentRequest =
             PaymentRequest(
@@ -110,7 +95,7 @@ class OrderServiceUnitTest : BaseUnitTest() {
             .assertNext { assertThat(it).isEqualTo(expected) }
             .verifyComplete()
 
-        verify(atLeast = 1, ordering = Ordering.ORDERED) {
+        verify(exactly = 1) {
             orderMapper.toEntity(request)
             orderRepository.save(newOrder)
             orderMapper.toPaymentRequest(savedOrder)
@@ -127,7 +112,7 @@ class OrderServiceUnitTest : BaseUnitTest() {
                 )
             }
             orderRepository.save(updatedOrder)
-            orderMapper.toResponse(savedOrder)
+            orderMapper.toResponse(updatedOrder)
         }
     }
 

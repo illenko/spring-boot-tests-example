@@ -77,7 +77,6 @@ abstract class BaseFunctionalTest : BaseTest() {
         )
     }
 
-    @Suppress("unused")
     companion object {
         private const val JDBC_PREFIX = "jdbc"
         private const val R2DBC_PREFIX = "r2dbc"

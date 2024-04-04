@@ -37,7 +37,6 @@ class OrderServiceUnitTest : BaseUnitTest() {
             orderMapper = orderMapper,
         )
 
-    @Suppress("LongMethod")
     @ParameterizedTest
     @ArgumentsSource(DataProvider::class)
     fun `processing order`(

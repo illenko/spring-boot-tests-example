@@ -34,18 +34,14 @@ class OrderMapper {
             paymentId = paymentResponse.id,
         )
 
-    fun toEntity(
-        order: Order,
-        status: OrderStatus,
-    ): Order =
+    fun toEntityWithFailedPayment(order: Order): Order =
         Order(
             id = order.id,
             userId = order.userId,
             tokenId = order.tokenId,
             itemId = order.itemId,
             price = order.price,
-            status = status,
-            paymentId = order.paymentId,
+            status = OrderStatus.PAYMENT_FAILED,
         )
 
     fun toPaymentRequest(order: Order): PaymentRequest =

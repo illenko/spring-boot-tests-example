@@ -36,13 +36,13 @@ abstract class BaseFunctionalTest : BaseTest() {
     @BeforeEach
     fun setup() {
         clearAllMocks()
-        orderRepository.deleteAll().block()
-        wiremock.resetAll()
+        clearDatabase()
+        resetWiremock()
     }
 
     @AfterEach
     fun afterEach() {
-        wiremock.checkForUnmatchedRequests()
+        checkForUnmatchedRequests()
     }
 
     final inline fun <reified T : Any> doPost(
@@ -75,6 +75,18 @@ abstract class BaseFunctionalTest : BaseTest() {
                 }
                 .willReturn(WireMock.jsonResponse(responseBody, responseStatus.value())),
         )
+    }
+
+    private fun clearDatabase() {
+        orderRepository.deleteAll().block()
+    }
+
+    private fun resetWiremock() {
+        wiremock.resetAll()
+    }
+
+    private fun checkForUnmatchedRequests() {
+        wiremock.checkForUnmatchedRequests()
     }
 
     companion object {

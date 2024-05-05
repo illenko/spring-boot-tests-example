@@ -23,6 +23,17 @@ class OrderJsonFunctionalTest : BaseFunctionalTest() {
     ) {
         val request = loadResource("/internal/request")
 
+        mockPaymentResponse(paymentResponse, paymentResponseStatus)
+
+        val actual = doPost<String>(uri = "/orders", body = request).responseBody.blockFirst()!!
+
+        assertJson(expected, actual)
+    }
+
+    private fun mockPaymentResponse(
+        paymentResponse: String,
+        paymentResponseStatus: HttpStatus,
+    ) {
         mockPost(
             uri = "/api/v1/payments",
             requestBody = loadResource("external/payment/request"),
@@ -30,10 +41,6 @@ class OrderJsonFunctionalTest : BaseFunctionalTest() {
             responseBody = paymentResponse,
             responseStatus = paymentResponseStatus,
         )
-
-        val actual = doPost<String>(uri = "/orders", body = request).responseBody.blockFirst()!!
-
-        assertJson(expected, actual)
     }
 
     private fun assertJson(

@@ -82,7 +82,7 @@ class OrderServiceUnitTest : BaseUnitTest() {
         every { orderMapper.toPaymentRequest(any()) } returns paymentRequest
         every { paymentClient.pay(any()) } returns paymentResponse
         if (paymentResponseValue == null) {
-            every { orderMapper.toEntity(any(), any<OrderStatus>()) } returns updatedOrder
+            every { orderMapper.toEntityWithFailedPayment(any()) } returns updatedOrder
         } else {
             every { orderMapper.toEntity(any(), any<PaymentResponse>()) } returns updatedOrder
         }
@@ -105,9 +105,8 @@ class OrderServiceUnitTest : BaseUnitTest() {
                     paymentResponseValue,
                 )
             } else {
-                orderMapper.toEntity(
+                orderMapper.toEntityWithFailedPayment(
                     savedOrder,
-                    OrderStatus.PAYMENT_FAILED,
                 )
             }
             orderRepository.save(updatedOrder)

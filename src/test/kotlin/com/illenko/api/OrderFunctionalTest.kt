@@ -27,6 +27,18 @@ class OrderFunctionalTest : BaseFunctionalTest() {
     ) {
         val request = random<OrderRequest>()
 
+        mockPaymentEndpoint(request, paymentResponse, paymentResponseStatus)
+
+        val actual = doPost<OrderResponse>(uri = "/orders", body = request.toJson()).responseBody.blockFirst()!!
+        assertNotNull(actual.id)
+        assertEquals(orderStatus, actual.status)
+    }
+
+    private fun mockPaymentEndpoint(
+        request: OrderRequest,
+        paymentResponse: PaymentResponse?,
+        paymentResponseStatus: HttpStatus,
+    ) {
         mockPost(
             uri = "/api/v1/payments",
             requestBody = PaymentRequest(tokenId = request.tokenId, amount = request.price).toJson(),
@@ -34,10 +46,6 @@ class OrderFunctionalTest : BaseFunctionalTest() {
             responseBody = paymentResponse?.toJson() ?: "{}",
             responseStatus = paymentResponseStatus,
         )
-
-        val actual = doPost<OrderResponse>(uri = "/orders", body = request.toJson()).responseBody.blockFirst()!!
-        assertNotNull(actual.id)
-        assertEquals(orderStatus, actual.status)
     }
 
     class DataProvider : ArgumentsProvider {
